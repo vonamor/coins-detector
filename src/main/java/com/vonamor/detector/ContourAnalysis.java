@@ -1,7 +1,15 @@
 package com.vonamor.detector;
 
 
+import org.opencv.core.*;
+import org.opencv.features2d.DescriptorExtractor;
+import org.opencv.features2d.FeatureDetector;
+import org.opencv.features2d.Features2d;
+import org.opencv.imgproc.Imgproc;
+
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ContourAnalysis {
 
@@ -9,8 +17,10 @@ public class ContourAnalysis {
 
         Util.loadOpenCVLibrary();
 
-        String srcImageFilename = "res/coin/mungu.jpg";
-//        String srcImageFilename = "res/coin/roubl_avers.jpg";
+//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mungu.jpg";
+//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mungu.jpg";
+        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\kopek.jpg";
+//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\quarter_revers.jpg";
 
         processImage(srcImageFilename);
 
@@ -18,14 +28,16 @@ public class ContourAnalysis {
 
     public static void processImage(String filename) {
         Mat src = Util.readImage(filename);
+        System.out.println(src);
         Util.showResult(src);
 
-//        Mat gray = new Mat();
-//        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
-//        Imgproc.medianBlur(gray, gray, 9);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.medianBlur(gray, gray, 5);
 //        Imgproc.erode(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(3, 3)));
-
-//        Util.showResult(gray);
+//        Imgproc.dilate(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(3, 3)));
+        Imgproc.threshold(gray, gray, 0, 360, Imgproc.THRESH_OTSU);
+        Util.showResult(gray);
 
         hsvOtsu(src);
 
@@ -95,9 +107,12 @@ public class ContourAnalysis {
         Mat value = channelsHSV.get(2);
 
         Util.showResult(hue);
+        Util.showResult(sat);
+        Util.showResult(value);
+
         Mat binary = new Mat();
 //        Imgproc.medianBlur(hue, hue, 9);
-        Imgproc.erode(hue, binary, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(3, 3)));
+        Imgproc.erode(sat, binary, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(3, 3)));
         Imgproc.dilate(binary, binary, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(3, 3)));
 
         Imgproc.threshold(binary, binary, 0, 360, Imgproc.THRESH_OTSU);
