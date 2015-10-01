@@ -18,7 +18,8 @@ public class ContourAnalysis {
         Util.loadOpenCVLibrary();
 
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mungu.jpg";
-        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mark_revers.jpg";
+//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mark_revers.jpg";
+        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\gr_revers.jpg";
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\kopek.jpg";
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\quarter_revers.jpg";
 
@@ -45,14 +46,21 @@ public class ContourAnalysis {
 
         HSV hsv = new HSV(src);
 
-        int size = 3;
+        int size = 5;
 
 //        cannyWithMorphology(hsv.getHue(), size);
 //        invert(hsv.getSat());
 
-        cannyWithMorphology(hsv.getSat(), size);
-        cannyWithMorphology(hsv.getValue(), size);
-        cannyWithMorphology(gray, size);
+        Mat hue = new Mat();
+        Imgproc.medianBlur(hsv.getHue(), hue, 9);
+        invert(hue, 30);
+//        Util.showResult(hsv.getSat());
+//        Util.showResult(hsv.getValue());
+
+
+//        cannyWithMorphology(hsv.getSat(), size);
+//        cannyWithMorphology(hsv.getValue(), size);
+//        cannyWithMorphology(gray, size);
 
         /*canny(hsv.getHue());
         canny(hsv.getSat());
@@ -80,10 +88,16 @@ public class ContourAnalysis {
 
     public static void invert(Mat src) {
         Scalar mean = Core.mean(src);
+        System.out.println(mean);
+        invert(src, mean.val[0]);
+    }
+
+    public static void invert(Mat src, double value) {
         Mat inverted = new Mat();
-        Imgproc.threshold(src, inverted, mean.val[0], 255, Imgproc.THRESH_BINARY_INV);
+        Imgproc.threshold(src, inverted, value, 255, Imgproc.THRESH_BINARY_INV);
         Util.showResult(inverted);
     }
+
 
     public static void cannyWithMorphology(Mat gray, int size) {
         Imgproc.medianBlur(gray, gray, size);
@@ -96,6 +110,7 @@ public class ContourAnalysis {
         Scalar mean = Core.mean(gray);
         Mat canny = new Mat();
         Imgproc.Canny(gray, canny, mean.val[0], 255);
+        findContours(canny);
         Util.showResult(canny);
     }
 
@@ -115,14 +130,15 @@ public class ContourAnalysis {
         return descriptors;
     }
 
-    public static void findContours(Mat binary, Mat src) {
+    public static void findContours(Mat binary) {
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
         Mat heirarchy = new Mat();
-        Imgproc.findContours(binary, contours, heirarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(binary, contours, heirarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_TC89_KCOS);
         Mat drawing = new Mat(binary.size(), CvType.CV_8UC3);
-        for( int i = 0; i< contours.size(); i++ ) {
-            Imgproc.boundingRect(contours.get(i));
-            Imgproc.drawContours(drawing, contours, i, new Scalar(30.0,255.0,30.0), 1, Imgproc.CV_WARP_FILL_OUTLIERS, heirarchy, 0, new Point());
+        for( int i = 0; i< contours.size(); i++) {
+            if (Imgproc.contourArea(contours.get(i)) > 100) {
+                Imgproc.drawContours(drawing, contours, i, new Scalar(30.0,255.0,30.0), 1, Imgproc.CV_WARP_FILL_OUTLIERS, heirarchy, 0, new Point());
+            }
         }
         Util.showResult(drawing);
     }
