@@ -50,7 +50,7 @@ public class Util {
             InputStream in = new ByteArrayInputStream(byteArray);
             BufferedImage bufImage = ImageIO.read(in);
             JFrame frame = new JFrame();
-            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
             frame.getContentPane().add(new JLabel(new ImageIcon(bufImage)));
             frame.pack();
             frame.setVisible(true);
