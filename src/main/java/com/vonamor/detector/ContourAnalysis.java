@@ -9,6 +9,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class ContourAnalysis {
@@ -19,8 +20,8 @@ public class ContourAnalysis {
 
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mungu.jpg";
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\mark_revers.jpg";
-        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\gr_revers.jpg";
-//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\kopek.jpg";
+//        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\gr_revers.jpg";
+        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\kopek.jpg";
 //        String srcImageFilename = "C:\\dev\\projects\\coins-detector\\src\\main\\resources\\img\\quarter_revers.jpg";
 
         processImage(srcImageFilename);
@@ -30,7 +31,7 @@ public class ContourAnalysis {
     public static void processImage(String filename) {
         Mat src = Util.readImage(filename);
 
-        Util.showResult(src);
+//        Util.showResult(src);
 
         Mat gray = new Mat();
         Imgproc.cvtColor(src, gray, Imgproc.COLOR_BGR2GRAY);
@@ -52,11 +53,35 @@ public class ContourAnalysis {
 //        invert(hsv.getSat());
 
         Mat hue = new Mat();
-        Imgproc.medianBlur(hsv.getHue(), hue, 9);
-        invert(hue, 30);
+        Imgproc.medianBlur(hsv.getHue(), hue, 5);
+        Mat hueInv = invert(hue, 30);
+
+        Imgproc.medianBlur(hueInv, hueInv, 5);
+        Util.showResult(hueInv);
+
 //        Util.showResult(hsv.getSat());
 //        Util.showResult(hsv.getValue());
 
+        Util.showResult(close(hueInv, 5));
+        Util.showResult(open(hueInv, 5));
+
+        List<Mat> list = Collections.singletonList(hue);
+
+        Mat hist = new Mat();
+        MatOfInt histSize = new MatOfInt(255);
+
+        Imgproc.calcHist(list, new MatOfInt(0), new Mat(), hist, histSize, new MatOfFloat(0, 256));
+
+        Mat histImage = Mat.zeros( 100, (int)histSize.get(0, 0)[0], CvType.CV_8UC1);
+        Core.normalize(hist, hist, 1, histImage.rows() , Core.NORM_MINMAX, -1, new Mat());
+        for( int i = 0; i < (int)histSize.get(0, 0)[0]; i++) {
+            Core.line(histImage,
+                    new Point(i, histImage.rows()),
+                    new Point(i, histImage.rows() - Math.round(hist.get(i,0)[0])) ,
+                    new Scalar( 255, 255, 255),
+                    1, 8, 0);
+        }
+//        Util.showResult(histImage);
 
 //        cannyWithMorphology(hsv.getSat(), size);
 //        cannyWithMorphology(hsv.getValue(), size);
@@ -92,10 +117,25 @@ public class ContourAnalysis {
         invert(src, mean.val[0]);
     }
 
-    public static void invert(Mat src, double value) {
+    public static Mat invert(Mat src, double value) {
         Mat inverted = new Mat();
         Imgproc.threshold(src, inverted, value, 255, Imgproc.THRESH_BINARY_INV);
         Util.showResult(inverted);
+        return inverted;
+    }
+
+    public static Mat open(Mat src, int size) {
+        Mat gray = new Mat();
+        Imgproc.erode(src, gray, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(size, size)));
+        Imgproc.dilate(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(size, size)));
+        return gray;
+    }
+
+    public static Mat close(Mat src, int size) {
+        Mat gray = new Mat();
+        Imgproc.dilate(src, gray, Imgproc.getStructuringElement(Imgproc.MORPH_DILATE, new Size(size, size)));
+        Imgproc.erode(gray, gray, Imgproc.getStructuringElement(Imgproc.MORPH_ERODE, new Size(size, size)));
+        return gray;
     }
 
 
